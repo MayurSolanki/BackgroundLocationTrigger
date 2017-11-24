@@ -41,13 +41,11 @@ public class GpsReadingService extends Service implements GoogleApiClient.Connec
     private Location mCurrentLocation;
     private String mLastUpdateTime;
     MqttClient client;
-    boolean isManualTrigger = true;
-
     public GpsReadingService() {
 
 
     }
-
+    boolean isManualTrigger = true;
     /*
      Called befor service  onStart method is called.All Initialization part goes here
     */
@@ -73,8 +71,15 @@ public class GpsReadingService extends Service implements GoogleApiClient.Connec
         createLocationRequest();
         createLocationCallback();
 
-        connetToMosquittoServer();
-        subscribeToMosquittoBrocker();
+        if (ConnectivityReceiver.isConnected()){
+            connetToMosquittoServer();
+            subscribeToMosquittoBrocker();
+        }else {
+            Toast.makeText(getApplicationContext(), "Check internet connectivity", Toast.LENGTH_SHORT).show();
+        }
+
+
+
         return START_STICKY;
     }
 
@@ -113,8 +118,30 @@ public class GpsReadingService extends Service implements GoogleApiClient.Connec
 
         mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
         if (mLastLocation != null) {
+            isManualTrigger = false;
+            if (ConnectivityReceiver.isConnected()){
+                if (client.isConnected()) {
 
-            //Toast.makeText(this, "Latitude:" + mLastLocation.getLatitude() + ", Longitude:" + mLastLocation.getLongitude(), Toast.LENGTH_LONG).show();
+                    prepareMqttMessage(isManualTrigger,mLastLocation.getLatitude(), mLastLocation.getLongitude(),mLastUpdateTime);
+
+
+                } else {
+                    connetToMosquittoServer();
+
+
+                    prepareMqttMessage(isManualTrigger,mLastLocation.getLatitude(), mLastLocation.getLongitude(),mLastUpdateTime);
+                }
+
+                isManualTrigger = true;
+            }else {
+                Toast.makeText(getApplicationContext(), "Check internet connectivity", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Latitude:" + mLastLocation.getLatitude() + ", Longitude:" + mLastLocation.getLongitude(), Toast.LENGTH_LONG).show();
+
+
+            }
+
+
+
 
         }
 
@@ -163,38 +190,36 @@ public class GpsReadingService extends Service implements GoogleApiClient.Connec
 
     @Override
     public void onLocationChanged(Location location) {
+       // isManualTrigger = false;
         mLastLocation = location;
         mLastUpdateTime = DateFormat.getTimeInstance().format(new Date());
-      //  Toast.makeText(this, "Update -> Latitude:" + mLastLocation.getLatitude() + ", Longitude:" + mLastLocation.getLongitude(), Toast.LENGTH_LONG).show();
-
-        if (client.isConnected()) {
 
 
-            JSONObject jsonObject = new JSONObject();
-            try {
-                jsonObject.put("LATITUDE", mLastLocation.getLatitude());
-                jsonObject.put("LONGITUDE", mLastLocation.getLongitude());
-                jsonObject.put("TIME", mLastUpdateTime);
+//        if (ConnectivityReceiver.isConnected()){
+//            if (client.isConnected()) {
+//
+//
+//                prepareMqttMessage(isManualTrigger,mLastLocation.getLatitude(), mLastLocation.getLongitude(),mLastUpdateTime);
+//
+//
+//            } else {
+//                connetToMosquittoServer();
+//
+//
+//                prepareMqttMessage(isManualTrigger,mLastLocation.getLatitude(), mLastLocation.getLongitude(),mLastUpdateTime);
+//            }
+//
+//            isManualTrigger = true;
+//        }else {
+//            Toast.makeText(getApplicationContext(), "Check internet connectivity", Toast.LENGTH_SHORT).show();
+//            AppLogger.e("Update : " + " Lat : " + mCurrentLocation.getLatitude() + "  Lon :" + mCurrentLocation.getLongitude() + " Time : " + mLastUpdateTime);
+//
+//
+//        }
 
-                publishMessage(jsonObject.toString());
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
 
-        } else {
-            connetToMosquittoServer();
 
-            JSONObject jsonObject = new JSONObject();
-            try {
-                jsonObject.put("LATITUDE", mLastLocation.getLatitude());
-                jsonObject.put("LONGITUDE", mLastLocation.getLongitude());
-                jsonObject.put("TIME", mLastUpdateTime);
 
-                publishMessage(jsonObject.toString());
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-        }
     }
 
 
@@ -249,48 +274,33 @@ public class GpsReadingService extends Service implements GoogleApiClient.Connec
             public void onLocationResult(LocationResult locationResult) {
                 super.onLocationResult(locationResult);
 
+                isManualTrigger = false;
                 mCurrentLocation = locationResult.getLastLocation();
                 mLastUpdateTime = DateFormat.getTimeInstance().format(new Date());
 
-             //   AppLogger.e("Update : " + " Lat : " + mCurrentLocation.getLatitude() + "  Lon :" + mCurrentLocation.getLongitude() + " Time : " + mLastUpdateTime);
 
-                if (client.isConnected()) {
+                if (ConnectivityReceiver.isConnected()){
 
 
-                    JSONObject jsonObject = new JSONObject();
-                    try {
-                        jsonObject.put("TYPE", "continuous_trigger");
-                        jsonObject.put("LATITUDE", mCurrentLocation.getLatitude());
-                        jsonObject.put("LONGITUDE", mCurrentLocation.getLongitude());
-                        jsonObject.put("TIME", mLastUpdateTime);
+                    if (client.isConnected()) {
 
-                        publishMessage(jsonObject.toString());
-                    } catch (JSONException e) {
-                        e.printStackTrace();
+
+                        prepareMqttMessage(isManualTrigger,mLastLocation.getLatitude(), mLastLocation.getLongitude(),mLastUpdateTime);
+
+
+
+                    } else {
+                        connetToMosquittoServer();
+
+                        prepareMqttMessage(isManualTrigger,mLastLocation.getLatitude(), mLastLocation.getLongitude(),mLastUpdateTime);
+
                     }
-
-                } else {
-                    connetToMosquittoServer();
-
-                    JSONObject jsonObject = new JSONObject();
-                    try {
-                        jsonObject.put("TYPE", "continuous_trigger");
-                        jsonObject.put("LATITUDE", mCurrentLocation.getLatitude());
-                        jsonObject.put("LONGITUDE", mCurrentLocation.getLongitude());
-                        jsonObject.put("TIME", mLastUpdateTime);
-
-                        publishMessage(jsonObject.toString());
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
+                    isManualTrigger = true;
+                }else {
+                   // Toast.makeText(getApplicationContext(), "Check internet connectivity", Toast.LENGTH_SHORT).show();
+                    AppLogger.e("Check internet connectivity");
+                    AppLogger.e("Update : " + " Lat : " + mCurrentLocation.getLatitude() + "  Lon :" + mCurrentLocation.getLongitude() + " Time : " + mLastUpdateTime);
                 }
-
-                isManualTrigger = true;
-
-//                Bundle mBundle = new Bundle();
-//                mBundle.putString("Lat",""+mCurrentLocation.getLatitude());
-//                mBundle.putString("Lon",""+mCurrentLocation.getLongitude());
-//                startService(new Intent(getApplicationContext(),FusedService.class).putExtras(mBundle));
 
 
             }
@@ -313,6 +323,13 @@ public class GpsReadingService extends Service implements GoogleApiClient.Connec
 
 
     private void connetToMosquittoServer() {
+
+
+        if (!ConnectivityReceiver.isConnected()){
+            Toast.makeText(this, "Check internet connectivity", Toast.LENGTH_SHORT).show();
+            return;
+
+        }
 
         AppLogger.e("Connecting to Mosquitto");
 
@@ -372,11 +389,16 @@ public class GpsReadingService extends Service implements GoogleApiClient.Connec
         if(type.equalsIgnoreCase("continuous_trigger")){
             AppLogger.e("messageArrived..." + payload);
 
+
         }else if (type.equalsIgnoreCase("manual_trigger")){
             AppLogger.e("messageArrived..." + payload);
+
             if(isManualTrigger){
-                manualTrigger();
+                prepareMqttMessage(isManualTrigger,mLastLocation.getLatitude(), mLastLocation.getLongitude(),mLastUpdateTime);
             }
+
+
+
 
         }
 
@@ -391,50 +413,32 @@ public class GpsReadingService extends Service implements GoogleApiClient.Connec
             AppLogger.e("deliveryComplete..." + token.isComplete());
     }
 
-    public void manualTrigger(){
-
-                //   AppLogger.e("Update : " + " Lat : " + mCurrentLocation.getLatitude() + "  Lon :" + mCurrentLocation.getLongitude() + " Time : " + mLastUpdateTime);
-
-                if (client.isConnected()) {
 
 
-                    JSONObject jsonObject = new JSONObject();
-                    try {
-                        jsonObject.put("TYPE", "manual_trigger");
-                        jsonObject.put("LATITUDE", mCurrentLocation.getLatitude());
-                        jsonObject.put("LONGITUDE", mCurrentLocation.getLongitude());
-                        jsonObject.put("TIME", mLastUpdateTime);
+    public void prepareMqttMessage(boolean isManuallyTrigger, double latitude, double longitude, String mLastUpdateTime){
 
-                        publishMessage(jsonObject.toString());
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
+        JSONObject jsonObject = new JSONObject();
+        try {
 
-                } else {
-                    connetToMosquittoServer();
+            jsonObject.put("TYPE", isManuallyTrigger?"manual_trigger":"continuous_trigger");
+            jsonObject.put("LATITUDE",latitude);
+            jsonObject.put("LONGITUDE",longitude);
+            jsonObject.put("TIME", mLastUpdateTime);
 
-                    JSONObject jsonObject = new JSONObject();
-                    try {
-                        jsonObject.put("TYPE", "manual_trigger");
-                        jsonObject.put("LATITUDE", mCurrentLocation.getLatitude());
-                        jsonObject.put("LONGITUDE", mCurrentLocation.getLongitude());
-                        jsonObject.put("TIME", mLastUpdateTime);
-
-                        publishMessage(jsonObject.toString());
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
+            publishMessage(jsonObject.toString());
 
 
-//                Bundle mBundle = new Bundle();
-//                mBundle.putString("Lat",""+mCurrentLocation.getLatitude());
-//                mBundle.putString("Lon",""+mCurrentLocation.getLongitude());
-//                startService(new Intent(getApplicationContext(),FusedService.class).putExtras(mBundle));
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        if(isManuallyTrigger){
+            isManualTrigger = false;
+        }
 
 
 
-        };
-
-        isManualTrigger = false;
     }
+
+
 }

@@ -27,7 +27,7 @@ dependencies {
     implementation 'com.android.support.constraint:constraint-layout:1.0.2'
     implementation 'com.android.support:design:26.1.0'
     compile 'com.google.android.gms:play-services-location:11.6.0'
-    compile 'com.firebase:firebase-jobdispatcher-with-gcm-dep:0.6.0'
+
 
     // for MQTT:
     compile('org.eclipse.paho:org.eclipse.paho.client.mqttv3:1.1.0', {

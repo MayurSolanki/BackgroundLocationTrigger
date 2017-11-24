@@ -9,12 +9,7 @@ import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.widget.Toast;
 
-import com.firebase.jobdispatcher.FirebaseJobDispatcher;
-import com.firebase.jobdispatcher.GooglePlayDriver;
-import com.firebase.jobdispatcher.Job;
-import com.firebase.jobdispatcher.Lifetime;
-import com.firebase.jobdispatcher.RetryStrategy;
-import com.firebase.jobdispatcher.Trigger;
+
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -41,14 +36,14 @@ public class LocationActivity extends AppCompatActivity implements GoogleApiClie
     private LocationCallback mLocationCallback;
     private Location mCurrentLocation;
     private String mLastUpdateTime;
-    FirebaseJobDispatcher firebaseJobDispatcher;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_location);
 
         if (checkGooglePlayServices()) {
-            firebaseJobDispatcher = new FirebaseJobDispatcher(new GooglePlayDriver(LocationActivity.this));
+           // firebaseJobDispatcher = new FirebaseJobDispatcher(new GooglePlayDriver(LocationActivity.this));
 
             buildGoogleApiClient();
 
