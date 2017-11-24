@@ -118,27 +118,27 @@ public class GpsReadingService extends Service implements GoogleApiClient.Connec
 
         mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
         if (mLastLocation != null) {
-            isManualTrigger = false;
-            if (ConnectivityReceiver.isConnected()){
-                if (client.isConnected()) {
-
-                    prepareMqttMessage(isManualTrigger,mLastLocation.getLatitude(), mLastLocation.getLongitude(),mLastUpdateTime);
-
-
-                } else {
-                    connetToMosquittoServer();
-
-
-                    prepareMqttMessage(isManualTrigger,mLastLocation.getLatitude(), mLastLocation.getLongitude(),mLastUpdateTime);
-                }
-
-                isManualTrigger = true;
-            }else {
-                Toast.makeText(getApplicationContext(), "Check internet connectivity", Toast.LENGTH_SHORT).show();
-                Toast.makeText(this, "Latitude:" + mLastLocation.getLatitude() + ", Longitude:" + mLastLocation.getLongitude(), Toast.LENGTH_LONG).show();
-
-
-            }
+//            isManualTrigger = false;
+//            if (ConnectivityReceiver.isConnected()){
+//                if (client.isConnected()) {
+//
+//                    prepareMqttMessage(isManualTrigger,mLastLocation.getLatitude(), mLastLocation.getLongitude(),mLastUpdateTime);
+//
+//
+//                } else {
+//                    connetToMosquittoServer();
+//
+//
+//                    prepareMqttMessage(isManualTrigger,mLastLocation.getLatitude(), mLastLocation.getLongitude(),mLastUpdateTime);
+//                }
+//
+//                isManualTrigger = true;
+//            }else {
+//                Toast.makeText(getApplicationContext(), "Check internet connectivity", Toast.LENGTH_SHORT).show();
+//                Toast.makeText(this, "Latitude:" + mLastLocation.getLatitude() + ", Longitude:" + mLastLocation.getLongitude(), Toast.LENGTH_LONG).show();
+//
+//
+//            }
 
 
 
